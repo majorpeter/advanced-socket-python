@@ -11,10 +11,11 @@ def DEBUG_LOG(message):
 
 
 class AdvancedSocket():
-    def __init__(self, ip_address, port, max_reconnects=None, rx_timeout_sec=None, tx_timeout_sec=1.5):
+    def __init__(self, ip_address, port, max_reconnects=None, reconnect_delay_sec = 2, rx_timeout_sec=None, tx_timeout_sec=1.5):
         self.ip_address = ip_address
         self.port = port
         self.max_reconnects = max_reconnects
+        self.reconnect_delay_sec = reconnect_delay_sec
         self.rx_timeout_sec = rx_timeout_sec
         self.tx_timeout_sec = tx_timeout_sec
         self.socket = None
@@ -68,4 +69,4 @@ class AdvancedSocket():
                         raise BaseException('Max reconnects reached')
                     self.max_reconnects -= 1
 
-                sleep(1)
+                sleep(self.reconnect_delay_sec)
