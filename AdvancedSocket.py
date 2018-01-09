@@ -54,6 +54,7 @@ class AdvancedSocket():
         self.socket = None
 
     def send(self, data):
+        max_reconnects = self.max_reconnects
         while True:
             try:
                 if not self.socket:
@@ -64,9 +65,11 @@ class AdvancedSocket():
             except OSError as e:
                 DEBUG_LOG(e)
 
-                if self.max_reconnects is not None:
-                    if self.max_reconnects == 0:
-                        raise BaseException('Max reconnects reached')
-                    self.max_reconnects -= 1
+                if max_reconnects is not None:
+                    if max_reconnects == 0:
+                        DEBUG_LOG('Max reconnects reached (%d)' % self.max_reconnects)
+                        return False
+                    max_reconnects -= 1
 
                 sleep(self.reconnect_delay_sec)
+        return True
