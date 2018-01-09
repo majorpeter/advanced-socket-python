@@ -57,7 +57,7 @@ class AdvancedSocket():
                 if self.on_receive_callback is not None:
                     self.on_receive_callback(rxdata)
             except Exception as e:
-                DEBUG_LOG(e)
+                DEBUG_LOG('recv exception: ' + str(e))
                 break
         self.socket.close()
         self.socket = None
@@ -66,13 +66,16 @@ class AdvancedSocket():
         max_reconnects = self.max_reconnects
         while True:
             try:
-                if not self.socket:
+                if self.socket is None:
                     self.connect()
 
                 self.socket.send(data)
                 break
             except OSError as e:
-                DEBUG_LOG(e)
+                DEBUG_LOG('send os error: ' + str(e))
+                if self.socket is not None:
+                    self.socket.close()
+                    self.socket = None
 
                 if max_reconnects is not None:
                     if max_reconnects == 0:
