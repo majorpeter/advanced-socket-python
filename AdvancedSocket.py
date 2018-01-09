@@ -11,14 +11,21 @@ def DEBUG_LOG(message):
 
 
 class AdvancedSocket():
-    def __init__(self, ip_address, port, max_reconnects=None, reconnect_delay_sec = 2, rx_timeout_sec=None, tx_timeout_sec=1.5):
+    def __init__(self, ip_address, port,
+                 max_reconnects=None, reconnect_delay_sec=2,
+                 rx_timeout_sec=None, tx_timeout_sec=1.5,
+                 on_receive_callback=None):
         self.ip_address = ip_address
         self.port = port
         self.max_reconnects = max_reconnects
         self.reconnect_delay_sec = reconnect_delay_sec
         self.rx_timeout_sec = rx_timeout_sec
         self.tx_timeout_sec = tx_timeout_sec
+        self.on_receive_callback = on_receive_callback
         self.socket = None
+
+    def is_connected(self):
+        return self.socket is not None
 
     def connect(self):
         m_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,6 +54,8 @@ class AdvancedSocket():
                 rxdata = self.socket.recv(RX_BUFFER_SIZE)
                 if not rxdata:
                     break
+                if self.on_receive_callback is not None:
+                    self.on_receive_callback(rxdata)
             except Exception as e:
                 DEBUG_LOG(e)
                 break
