@@ -62,4 +62,10 @@ class AdvancedSocket():
                 break
             except OSError as e:
                 DEBUG_LOG(e)
+
+                if self.max_reconnects is not None:
+                    if self.max_reconnects == 0:
+                        raise BaseException('Max reconnects reached')
+                    self.max_reconnects -= 1
+
                 sleep(1)
