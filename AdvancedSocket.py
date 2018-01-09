@@ -1,7 +1,7 @@
 import socket
 import struct
 from threading import Thread
-
+from time import sleep
 
 RX_BUFFER_SIZE = 4096
 
@@ -19,24 +19,24 @@ class AdvancedSocket():
         self.tx_timeout_sec = tx_timeout_sec
         self.socket = None
 
-        self.connect()
-
     def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        m_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         if self.tx_timeout_sec is not None:
             timeout_sec = int(self.tx_timeout_sec)
             timeout_usec = int((self.tx_timeout_sec - timeout_sec) * 1e6)
             timeval = struct.pack('ll', timeout_sec, timeout_usec)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
+            m_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
 
         if self.rx_timeout_sec is not None:
             timeout_sec = int(self.rx_timeout_sec)
             timeout_usec = int((self.rx_timeout_sec - timeout_sec) * 1e6)
             timeval = struct.pack('ll', timeout_sec, timeout_usec)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
+            m_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
 
-        self.socket.connect((self.ip_address, self.port))
+        m_socket.connect((self.ip_address, self.port))
+        self.socket = m_socket
+
         thread = Thread(target=self.background_thread_function)
         thread.start()
 
@@ -47,9 +47,19 @@ class AdvancedSocket():
                 if not rxdata:
                     break
             except Exception as e:
-                print(e)
+                DEBUG_LOG(e)
                 break
         self.socket.close()
+        self.socket = None
 
     def send(self, data):
-        self.socket.send(data)
+        while True:
+            try:
+                if not self.socket:
+                    self.connect()
+
+                self.socket.send(data)
+                break
+            except OSError as e:
+                DEBUG_LOG(e)
+                sleep(1)
